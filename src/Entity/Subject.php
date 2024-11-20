@@ -100,7 +100,9 @@ class Subject
      */
     public function getGrades(): Collection
     {
-        return $this->grades;
+        return $this->grades->filter(function (Grade $grade) {
+            return $grade->getDeletedAt() == null;
+        });
     }
 
     public function addGrade(Grade $grade): static

@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Grade;
+use App\Entity\Subject;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,28 +18,31 @@ class GradeRepository extends ServiceEntityRepository
         parent::__construct($registry, Grade::class);
     }
 
-    //    /**
-    //     * @return Grade[] Returns an array of Grade objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('g')
-    //            ->andWhere('g.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('g.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findGradeById(int $id, User $user, bool $includeDeleted = false): ?Grade
+    {
+        try {
+            $query = $this->createQueryBuilder('g')
+                ->innerJoin(
+                    join: Subject::class,
+                    alias: 's',
+                    conditionType: 'WITH',
+                    condition: 's = g.subject'
+                )
+                ->where('g.id = :id')
+                ->andWhere('s.user = :user')
+                ->andWhere('s.deletedAt IS NULL')
+                ->setMaxResults(1)
+                ->setParameter('id', $id)
+                ->setParameter('user', $user);
 
-    //    public function findOneBySomeField($value): ?Grade
-    //    {
-    //        return $this->createQueryBuilder('g')
-    //            ->andWhere('g.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+            if (!$includeDeleted) {
+                $query->andWhere('g.deletedAt IS NULL');
+            }
+
+            return $query->getQuery()->getSingleResult();
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
 }

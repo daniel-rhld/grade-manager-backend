@@ -138,4 +138,16 @@ class Grade
 
         return $this;
     }
+
+    public function toJson(): array
+    {
+        return [
+            'id' => $this->id,
+            'grade' => $this->value,
+            'weighting' => $this->weighting,
+            'note' => $this->note,
+            'received_at' => $this->receivedAt->getTimestamp()
+        ];
+    }
+
 }

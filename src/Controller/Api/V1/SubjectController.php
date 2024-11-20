@@ -22,7 +22,7 @@ class SubjectController extends AppController
         return $this->json(
             data: $user->getSubjects()->map(function (Subject $subject) {
                 return $subject->toJson();
-            })
+            })->getValues()
         );
     }
 
