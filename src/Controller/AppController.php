@@ -33,10 +33,20 @@ class AppController extends AbstractController
             return $throwException ? throw new UnauthorizedHttpException('') : null;
         }
 
-        $token = explode(
+        $tokenData = explode(
             separator: ' ',
             string: $accessTokenRaw
-        )[1];
+        );
+
+        if (sizeof($tokenData) != 2) {
+            return $throwException ? throw new UnauthorizedHttpException('') : null;
+        }
+
+        if (trim($tokenData[0]) != 'Bearer') {
+            return $throwException ? throw new UnauthorizedHttpException('') : null;
+        }
+
+        $token = $tokenData[1];
 
         if ($token == null || strlen(trim($token)) == 0) {
             return $throwException ? throw new UnauthorizedHttpException('') : null;

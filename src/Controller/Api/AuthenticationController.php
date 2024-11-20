@@ -1,24 +1,23 @@
 <?php
 
-namespace App\Controller\Api\V1;
+namespace App\Controller\Api;
 
 use App\Controller\AppController;
-use App\DTO\LoginDTO;
-use App\DTO\RefreshAccessTokenDTO;
-use App\DTO\RegisterDTO;
+use App\DTO\Auth\LoginDTO;
+use App\DTO\Auth\RefreshAccessTokenDTO;
+use App\DTO\Auth\RegisterDTO;
 use App\Entity\AccessToken;
 use App\Entity\User;
 use App\Factory\AccessTokenFactory;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\PasswordHasher\PasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class AuthenticationController extends AppController
 {
 
-    #[Route('/api/v1/auth/register/', name: 'authentication-register', methods: ['POST'])]
+    #[Route('/api/auth/register/', name: 'authentication-register', methods: ['POST'])]
     public function register(
         #[MapRequestPayload] RegisterDTO $dto,
         UserPasswordHasherInterface $passwordHasher
@@ -39,7 +38,7 @@ class AuthenticationController extends AppController
         return $this->jsonMessage('Registrierung erfolgreich!');
     }
 
-    #[Route('/api/v1/auth/login/', name: 'authentication-login', methods: ['POST'])]
+    #[Route('/api/auth/login/', name: 'authentication-login', methods: ['POST'])]
     public function login(
         #[MapRequestPayload] LoginDTO $dto,
         UserPasswordHasherInterface $passwordHasher
@@ -78,7 +77,7 @@ class AuthenticationController extends AppController
         );
     }
 
-    #[Route('/api/v1/auth/refresh-token/', name: 'authentication-refresh-access-token', methods: ['POST'])]
+    #[Route('/api/auth/refresh-token/', name: 'authentication-refresh-access-token', methods: ['POST'])]
     public function refreshAccessToken(
         #[MapRequestPayload] RefreshAccessTokenDTO $dto
     ): JsonResponse {

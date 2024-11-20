@@ -180,7 +180,9 @@ class User implements PasswordAuthenticatedUserInterface
      */
     public function getSubjects(): Collection
     {
-        return $this->subjects;
+        return $this->subjects->filter(function (Subject $subject) {
+            return $subject->getDeletedAt() == null;
+        });
     }
 
     public function addSubject(Subject $subject): static

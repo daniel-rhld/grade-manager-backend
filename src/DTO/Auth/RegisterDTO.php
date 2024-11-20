@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO;
+namespace App\DTO\Auth;
 
 use App\Constraint as CustomAssert;
 use App\Entity\User;

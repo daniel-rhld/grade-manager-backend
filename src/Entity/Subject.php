@@ -25,7 +25,7 @@ class Subject
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $deleteAt = null;
+    private ?\DateTimeImmutable $deletedAt = null;
 
     /**
      * @var Collection<int, Grade>
@@ -83,14 +83,14 @@ class Subject
         return $this;
     }
 
-    public function getDeleteAt(): ?\DateTimeImmutable
+    public function getDeletedAt(): ?\DateTimeImmutable
     {
-        return $this->deleteAt;
+        return $this->deletedAt;
     }
 
-    public function setDeleteAt(?\DateTimeImmutable $deleteAt): static
+    public function setDeletedAt(?\DateTimeImmutable $deleteAt): static
     {
-        $this->deleteAt = $deleteAt;
+        $this->deletedAt = $deleteAt;
 
         return $this;
     }
@@ -136,4 +136,13 @@ class Subject
 
         return $this;
     }
+
+    public function toJson(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name
+        ];
+    }
+
 }
