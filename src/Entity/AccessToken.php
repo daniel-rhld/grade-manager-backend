@@ -112,7 +112,7 @@ class AccessToken
     {
         return [
             'access_token' => [
-                'token' => 'Bearer ' . $this->accessToken,
+                'token' => $this->accessToken,
                 'expiration' => $this->createdAt->getTimestamp() + self::ACCESS_TOKEN_TTL
             ],
             'refresh_token' => $this->refreshToken,

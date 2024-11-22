@@ -96,7 +96,7 @@ class AuthenticationController extends AppController
         $this->orm()->persist($accessToken);
         $this->orm()->flush();
 
-        return $this->jsonResponse($accessToken->toJson());
+        return $this->json($accessToken->toJson());
     }
 
     #[Route('/api/auth/refresh-token/', name: 'authentication-refresh-access-token', methods: ['POST'])]
@@ -119,7 +119,7 @@ class AuthenticationController extends AppController
         $this->orm()->persist($renewedAccessToken);
         $this->orm()->flush();
 
-        return $this->jsonResponse($accessToken->toJson());
+        return $this->json($accessToken->toJson());
     }
 
 }
