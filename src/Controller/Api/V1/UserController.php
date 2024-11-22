@@ -3,6 +3,9 @@
 namespace App\Controller\Api\V1;
 
 use App\Controller\AppController;
+use App\Utils\Helpers;
+use PHPUnit\TextUI\Help;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -23,13 +26,16 @@ class UserController extends AppController
         $subject = $request->get('subject');
         $message = $request->get('message');
 
-        $testEmail = (new Email())
+        $testEmail = (new TemplatedEmail())
             ->from('grademanager@orga-life.de')
             ->to($recipient)
-            ->subject($subject)
-            ->text($message);
+            ->subject('Herzlich wilkommen!')
+            ->htmlTemplate('email/registration-confirmation.twig')
+            ->context([
+                'confirmation_url' => 'https://www.google.de'
+            ]);
 
-        $jsonResponse = ['success' => true, 'message' => 'Email sent!'];
+        $jsonResponse = ['success' => true, 'message' => 'Email sent to ' . $recipient . '!'];
 
         try {
             $mailer->send($testEmail);

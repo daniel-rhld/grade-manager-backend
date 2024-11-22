@@ -50,6 +50,12 @@ class User implements PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Subject::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $subjects;
 
+    #[ORM\Column]
+    private ?bool $verified = null;
+
+    #[ORM\Column(length: 512, nullable: true)]
+    private ?string $verificationHash = null;
+
     public function __construct()
     {
         $this->accessTokens = new ArrayCollection();
@@ -214,8 +220,33 @@ class User implements PasswordAuthenticatedUserInterface
             'firstname' => $this->firstname,
             'lastname' => $this->lastname,
             'email_address' => $this->emailAddress,
-            'profile_picture_url' => 'https://dummyimage.com/500x500/90CAF9/FFFFFF?text=' . mb_substr($this->firstname, 0, 1) . mb_substr($this->lastname, 0, 1)
+            'profile_picture_url' => 'https://dummyimage.com/500x500/90CAF9/FFFFFF?text=' . mb_substr($this->firstname, 0, 1) . mb_substr($this->lastname, 0, 1),
+            'email_verified' => $this->verified
         ];
+    }
+
+    public function isVerified(): ?bool
+    {
+        return $this->verified;
+    }
+
+    public function setVerified(bool $verified): static
+    {
+        $this->verified = $verified;
+
+        return $this;
+    }
+
+    public function getVerificationHash(): ?string
+    {
+        return $this->verificationHash;
+    }
+
+    public function setVerificationHash(?string $verificationHash): static
+    {
+        $this->verificationHash = $verificationHash;
+
+        return $this;
     }
 
 }

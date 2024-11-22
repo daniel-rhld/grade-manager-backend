@@ -56,4 +56,18 @@ class UserRepository extends ServiceEntityRepository
         }
     }
 
+    public function findUserByHash(string $hash): ?User {
+        try {
+            return $this->createQueryBuilder('u')
+                ->where('u.verificationHash = :hash')
+                ->andWhere('u.deletedAt IS NULL')
+                ->setMaxResults(1)
+                ->setParameter('hash', $hash)
+                ->getQuery()
+                ->getSingleResult();
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
 }

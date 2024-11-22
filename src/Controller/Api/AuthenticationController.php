@@ -9,11 +9,15 @@ use App\DTO\Auth\RegisterDTO;
 use App\Entity\AccessToken;
 use App\Entity\User;
 use App\Factory\AccessTokenFactory;
+use App\Factory\UserFactory;
 use App\Repository\AccessTokenRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -41,13 +45,10 @@ class AuthenticationController extends AppController
 
     #[Route('/api/auth/register/', name: 'authentication-register', methods: ['POST'])]
     public function register(
-        #[MapRequestPayload] RegisterDTO $dto
+        #[MapRequestPayload] RegisterDTO $dto,
+        MailerInterface $mailer
     ): JsonResponse {
-        $user = new User();
-        $user->setFirstname($dto->firstName);
-        $user->setLastname($dto->lastName);
-        $user->setEmailAddress($dto->emailAddress);
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user = UserFactory::createFromDTO($dto);
         $user->setPassword($this->passwordHasher->hashPassword(
             user: $user,
             plainPassword: $dto->password
@@ -55,6 +56,19 @@ class AuthenticationController extends AppController
 
         $this->orm()->persist($user);
         $this->orm()->flush();
+
+        $confirmationEmail = (new TemplatedEmail())
+            ->from('grademanager@orga-life.de')
+            ->to($user->getEmailAddress())
+            ->subject('Herzlich wilkommen!')
+            ->htmlTemplate('email/registration-confirmation.twig')
+            ->context([
+                'confirmation_url' => 'https://orga-life.de/auth/verify-registration/?hash=' . $user->getVerificationHash()
+            ]);
+
+        try {
+            $mailer->send($confirmationEmail);
+        } catch (TransportExceptionInterface) {}
 
         return $this->jsonMessage('Registrierung erfolgreich!');
     }
