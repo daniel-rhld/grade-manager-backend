@@ -23,14 +23,14 @@ class AppController extends AbstractController
         return $this->orm;
     }
 
-    protected function authenticate(Request $request, bool $throwException = true): ?User {
+    protected function authenticate(Request $request): User {
         $accessTokenRaw = trim($request->headers->get(
             key: 'Authorization',
             default: ''
         ));
 
-        if (strlen($accessTokenRaw) == 0) {
-            return $throwException ? throw new UnauthorizedHttpException('') : null;
+        if ($accessTokenRaw === '') {
+            return throw new UnauthorizedHttpException('');
         }
 
         $tokenData = explode(
@@ -38,27 +38,27 @@ class AppController extends AbstractController
             string: $accessTokenRaw
         );
 
-        if (sizeof($tokenData) != 2) {
-            return $throwException ? throw new UnauthorizedHttpException('') : null;
+        if (count($tokenData) !== 2) {
+            return throw new UnauthorizedHttpException('');
         }
 
-        if (trim($tokenData[0]) != 'Bearer') {
-            return $throwException ? throw new UnauthorizedHttpException('') : null;
+        if (trim($tokenData[0]) !== 'Bearer') {
+            return throw new UnauthorizedHttpException('');
         }
 
         $token = $tokenData[1];
 
-        if ($token == null || strlen(trim($token)) == 0) {
-            return $throwException ? throw new UnauthorizedHttpException('') : null;
+        if ($token === null || trim($token) === '') {
+            return throw new UnauthorizedHttpException('');
         }
 
         $accessToken = $this->orm->getRepository(AccessToken::class)->findByAccessToken($token);
 
-        if ($accessToken != null && $accessToken->isValid()) {
+        if ($accessToken !== null && $accessToken->isValid()) {
             return $accessToken->getUser();
         }
 
-        return $throwException ? throw new UnauthorizedHttpException('') : null;
+        return throw new UnauthorizedHttpException('');
     }
 
     public function errorJsonResponse(array $data, int $status = 400): JsonResponse

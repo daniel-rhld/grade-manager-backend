@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Exception\ValidationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -33,6 +34,11 @@ class ExceptionListener
                     $exceptionHandled = true;
                 }
             }
+        }
+
+        if ($exception instanceof ValidationException) {
+            $jsonResponse['message'] = $exception->getMessage();
+            $exceptionHandled = true;
         }
 
         if ($exception instanceof UnauthorizedHttpException) {

@@ -141,9 +141,22 @@ class Subject
 
     public function toJson(): array
     {
+        $grades = $this->getGrades();
+        $hasAnyGrades = !$grades->isEmpty();
+
+        if ($hasAnyGrades) {
+            $gradeSum = 0.0;
+            $weightingSum = 0.0;
+            foreach ($this->getGrades() as $grade) {
+                $gradeSum += $grade->getValue() * $grade->getWeighting();
+                $weightingSum += $grade->getWeighting();
+            }
+        }
+
         return [
             'id' => $this->id,
-            'name' => $this->name
+            'name' => $this->name,
+            'average_grade' => $hasAnyGrades ? $gradeSum / max($weightingSum, 1.0) : null
         ];
     }
 

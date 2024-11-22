@@ -25,6 +25,7 @@ class AccessTokenFactory
         $accessToken->setAccessToken(self::generateRandomString(1024));
         $accessToken->setRefreshToken(self::generateRandomString(1024));
         $accessToken->setCreatedAt(new \DateTimeImmutable());
+        $accessToken->setRefreshTokenUsed(false);
         $accessToken->setUser($user);
 
         return $accessToken;

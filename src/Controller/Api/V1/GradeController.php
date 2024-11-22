@@ -9,7 +9,11 @@ use App\DTO\Grade\GetGradesDTO;
 use App\DTO\Grade\RestoreGradeDTO;
 use App\Entity\Grade;
 use App\Entity\Subject;
-use PHPUnit\Util\Json;
+use App\Exception\ValidationException;
+use App\Factory\GradeFactory;
+use App\Repository\GradeRepository;
+use App\Repository\SubjectRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -17,6 +21,22 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class GradeController extends AppController
 {
+    private SubjectRepository $subjectRepository;
+    private GradeRepository $gradeRepository;
+
+    public function __construct(
+        EntityManagerInterface $orm,
+
+        SubjectRepository $subjectRepository,
+        GradeRepository $gradeRepository
+    )
+    {
+        parent::__construct($orm);
+
+        $this->subjectRepository = $subjectRepository;
+        $this->gradeRepository = $gradeRepository;
+    }
+
     #[Route('/api/v1/grades/', name: 'grades-get-grades', methods: ['GET'])]
     public function getGradesForSubject(
         #[MapRequestPayload] GetGradesDTO $dto,
@@ -25,15 +45,9 @@ class GradeController extends AppController
     {
         $user = $this->authenticate($request);
 
-        /**
-         * @var $subject Subject
-         */
-        $subject = $this->orm()->getRepository(Subject::class)->findSubjectById(
-            $dto->subjectId,
-            $user
-        );
+        $subject = $this->subjectRepository->findSubjectById($dto->subjectId, $user);
 
-        if ($subject == null) {
+        if ($subject === null) {
             return $this->errorJsonMessage('Dieses Fach wurde nicht gefunden');
         }
 
@@ -44,6 +58,9 @@ class GradeController extends AppController
         );
     }
 
+    /**
+     * @throws ValidationException
+     */
     #[Route('/api/v1/grades/', name: 'grades-add-grade', methods: ['POST'])]
     public function addGradeToSubject(
         #[MapRequestPayload] AddGradeDTO $dto,
@@ -51,32 +68,13 @@ class GradeController extends AppController
     ): JsonResponse
     {
         $user = $this->authenticate($request);
+        $subject = $this->subjectRepository->findSubjectById($dto->subjectId, $user);
 
-        /**
-         * @var $subject Subject
-         */
-        $subject = $this->orm()->getRepository(Subject::class)->findSubjectById(
-            $dto->subjectId,
-            $user
-        );
-
-        if ($subject == null) {
+        if ($subject === null) {
             return $this->errorJsonMessage('Dieses Fach wurde nicht gefunden');
         }
 
-        if ($dto->receivedAt != null && $dto->receivedAt > (new \DateTime())->modify('+1 day')->setTime(0, 0)->getTimestamp()) {
-            return $this->jsonMessage('Das Datum der Aushändigung darf nicht in der Zukunft liegen.');
-        }
-
-        $receivedAt = $dto->receivedAt != null ? (new \DateTimeImmutable())->setTimestamp($dto->receivedAt) : null;
-
-        $grade = new Grade();
-        $grade->setValue($dto->grade);
-        $grade->setWeighting($dto->weighting);
-        $grade->setReceivedAt($receivedAt);
-        $grade->setNote($dto->note);
-        $grade->setCreatedAt(new \DateTimeImmutable());
-
+        $grade = GradeFactory::createFromDTO($dto);
         $subject->addGrade($grade);
 
         $this->orm()->persist($grade);
@@ -94,20 +92,13 @@ class GradeController extends AppController
         Request $request
     ): JsonResponse {
         $user = $this->authenticate($request);
+        $grade = $this->gradeRepository->findGradeById($dto->gradeId, $user);
 
-        /**
-         * @var $grade Grade
-         */
-        $grade = $this->orm()->getRepository(Grade::class)->findGradeById(
-            $dto->gradeId,
-            $user
-        );
-
-        if ($grade == null) {
+        if ($grade === null) {
             return $this->errorJsonMessage('Diese Note wurde nicht gefunden');
         }
 
-        $grade->setDeletedAt(new \DateTimeImmutable());
+        $grade = GradeFactory::delete($grade);
 
         $this->orm()->persist($grade);
         $this->orm()->flush();
@@ -122,28 +113,22 @@ class GradeController extends AppController
     ): JsonResponse
     {
         $user = $this->authenticate($request);
-
-        /**
-         * @var $grade Grade
-         */
-        $grade = $this->orm()->getRepository(Grade::class)->findGradeById(
+        $grade = $this->gradeRepository->findGradeById(
             id: $dto->gradeId,
             user: $user,
             includeDeleted: true
         );
 
-        if ($grade == null) {
+        if ($grade === null) {
             return $this->errorJsonMessage('Diese Note wurde nicht gefunden');
         }
 
-        $grade->setDeletedAt(null);
+        $grade = GradeFactory::restore($grade);
 
         $this->orm()->persist($grade);
         $this->orm()->flush();
 
-        return $this->jsonResponse(
-            data: $grade->toJson()
-        );
+        return $this->jsonResponse($grade->toJson());
     }
 
 }

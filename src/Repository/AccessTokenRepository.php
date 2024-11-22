@@ -35,6 +35,7 @@ class AccessTokenRepository extends ServiceEntityRepository
         try {
             return $this->createQueryBuilder('at')
                 ->where('at.refreshToken = :token')
+                ->andWhere('at.refreshTokenUsed = 0')
                 ->setMaxResults(1)
                 ->setParameter('token', trim($token))
                 ->getQuery()

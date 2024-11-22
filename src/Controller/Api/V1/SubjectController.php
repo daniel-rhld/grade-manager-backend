@@ -7,6 +7,9 @@ use App\DTO\Subject\CreateSubjectDTO;
 use App\DTO\Subject\DeleteSubjectDTO;
 use App\DTO\Subject\UpdateSubjectDTO;
 use App\Entity\Subject;
+use App\Factory\SubjectFactory;
+use App\Repository\SubjectRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -14,6 +17,19 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class SubjectController extends AppController
 {
+    private SubjectRepository $subjectRepository;
+
+    public function __construct(
+        EntityManagerInterface $orm,
+
+        SubjectRepository $subjectRepository
+    )
+    {
+        parent::__construct($orm);
+
+        $this->subjectRepository = $subjectRepository;
+    }
+
     #[Route('/api/v1/subjects/', name: 'subjects-get-subjects', methods: ['GET'])]
     public function getSubjects(Request $request): JsonResponse
     {
@@ -32,19 +48,13 @@ class SubjectController extends AppController
         Request $request
     ): JsonResponse {
         $user = $this->authenticate($request);
-
-        $doesSubjectAlreadyExist = $this->orm()->getRepository(Subject::class)->doesSubjectAlreadyExist(
-            $dto->name,
-            $user
-        );
+        $doesSubjectAlreadyExist = $this->subjectRepository->doesSubjectAlreadyExist($dto->name, $user);
 
         if ($doesSubjectAlreadyExist) {
             return $this->errorJsonMessage('Es existiert bereits ein Fach mit diesem Namen');
         }
 
-        $subject = new Subject();
-        $subject->setName($dto->name);
-        $subject->setCreatedAt(new \DateTimeImmutable());
+        $subject = SubjectFactory::createFromDTO($dto);
         $user->addSubject($subject);
 
         $this->orm()->persist($subject);
@@ -63,26 +73,19 @@ class SubjectController extends AppController
     ): JsonResponse {
         $user = $this->authenticate($request);
 
-        $doesSubjectAlreadyExist = $this->orm()->getRepository(Subject::class)->doesSubjectAlreadyExist(
-            $dto->name,
-            $user
-        );
+        $doesSubjectAlreadyExist = $this->subjectRepository->doesSubjectAlreadyExist($dto->name, $user);
 
         if ($doesSubjectAlreadyExist) {
             return $this->errorJsonMessage('Es existiert bereits ein Fach mit diesem Namen');
         }
 
-        $subject = $this->orm()->getRepository(Subject::class)->findSubjectById(
-            $dto->id,
-            $user
-        );
+        $subject = $this->subjectRepository->findSubjectById($dto->id, $user);
 
-        if ($subject == null) {
+        if ($subject === null) {
             return $this->errorJsonMessage('Dieses Fach wurde nicht gefunden');
         }
 
-        $subject->setName($dto->name);
-        $subject->setUpdatedAt(new \DateTimeImmutable());
+        $subject = SubjectFactory::updateFromDTO($subject, $dto);
 
         $this->orm()->persist($subject);
         $this->orm()->flush();
@@ -99,21 +102,18 @@ class SubjectController extends AppController
     ): JsonResponse {
         $user = $this->authenticate($request);
 
-        $subject = $this->orm()->getRepository(Subject::class)->findSubjectById(
-            $dto->id,
-            $user
-        );
+        $subject = $this->subjectRepository->findSubjectById($dto->id, $user);
 
-        if ($subject == null) {
+        if ($subject === null) {
             return $this->errorJsonMessage('Dieses Fach wurde nicht gefunden');
         }
 
-        $subject->setDeletedAt(new \DateTimeImmutable());
+        $subject = SubjectFactory::delete($subject);
 
         $this->orm()->persist($subject);
         $this->orm()->flush();
 
-        return $this->errorJsonMessage('Fach wurde gelöscht');
+        return $this->jsonMessage('Fach wurde gelöscht');
     }
 
 }

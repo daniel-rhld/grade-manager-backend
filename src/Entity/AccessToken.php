@@ -9,8 +9,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: AccessTokenRepository::class)]
 class AccessToken
 {
-    const ACCESS_TOKEN_TTL = 60 * 60; // Access token is valid for 1 hour
-    const REFRESH_TOKEN_TTL = 180 * 24 * 60 * 60; // Refresh token is valid for 180 days
+    public const ACCESS_TOKEN_TTL = 60 * 60; // Access token is valid for 1 hour
+    public const REFRESH_TOKEN_TTL = 180 * 24 * 60 * 60; // Refresh token is valid for 180 days
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -29,6 +29,9 @@ class AccessToken
     #[ORM\ManyToOne(inversedBy: 'accessTokens')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
+
+    #[ORM\Column]
+    private ?bool $refreshTokenUsed = null;
 
     public function getId(): ?int
     {
@@ -90,7 +93,31 @@ class AccessToken
 
     public function isRefreshTokenValid(): bool
     {
-        return $this->createdAt->getTimestamp() + self::REFRESH_TOKEN_TTL > time();
+        return $this->createdAt->getTimestamp() + self::REFRESH_TOKEN_TTL > time() && $this->refreshTokenUsed === false;
+    }
+
+    public function isRefreshTokenUsed(): ?bool
+    {
+        return $this->refreshTokenUsed;
+    }
+
+    public function setRefreshTokenUsed(bool $refreshTokenUsed): static
+    {
+        $this->refreshTokenUsed = $refreshTokenUsed;
+
+        return $this;
+    }
+
+    public function toJson(): array
+    {
+        return [
+            'access_token' => [
+                'token' => 'Bearer ' . $this->accessToken,
+                'expiration' => $this->createdAt->getTimestamp() + self::ACCESS_TOKEN_TTL
+            ],
+            'refresh_token' => $this->refreshToken,
+            'user' => $this->user->toJson()
+        ];
     }
 
 }

@@ -3,7 +3,6 @@
 namespace App\Constraint\Password;
 
 use Symfony\Component\Validator\Constraint;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
 
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class Password extends Constraint
@@ -25,8 +24,6 @@ class Password extends Constraint
     )
     {
         parent::__construct($options, $groups, $payload);
-
-
 
         $this->message = $message ?? $this->message;
     }
