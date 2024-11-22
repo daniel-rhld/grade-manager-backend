@@ -213,7 +213,8 @@ class User implements PasswordAuthenticatedUserInterface
             'id' => $this->id,
             'firstname' => $this->firstname,
             'lastname' => $this->lastname,
-            'email_address' => $this->emailAddress
+            'email_address' => $this->emailAddress,
+            'profile_picture_url' => 'https://dummyimage.com/500x500/90CAF9/FFFFFF?text=' . mb_substr($this->firstname, 0, 1) . mb_substr($this->lastname, 0, 1)
         ];
     }
 
