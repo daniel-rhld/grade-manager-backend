@@ -119,7 +119,7 @@ class AuthenticationController extends AppController
         $this->orm()->persist($renewedAccessToken);
         $this->orm()->flush();
 
-        return $this->json($accessToken->toJson());
+        return $this->json($renewedAccessToken->toJson());
     }
 
 }
