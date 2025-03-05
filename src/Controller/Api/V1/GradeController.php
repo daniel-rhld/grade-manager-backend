@@ -7,6 +7,7 @@ use App\DTO\Grade\AddGradeDTO;
 use App\DTO\Grade\DeleteGradeDTO;
 use App\DTO\Grade\GetGradesDTO;
 use App\DTO\Grade\RestoreGradeDTO;
+use App\DTO\PagingData\PagingRequestDto;
 use App\Entity\Grade;
 use App\Entity\Subject;
 use App\Exception\ValidationException;
@@ -16,6 +17,8 @@ use App\Repository\SubjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -39,7 +42,7 @@ class GradeController extends AppController
 
     #[Route('/api/v1/grades/', name: 'grades-get-grades', methods: ['GET'])]
     public function getGradesForSubject(
-        #[MapRequestPayload] GetGradesDTO $dto,
+        #[MapQueryString] GetGradesDTO $dto,
         Request $request
     ): JsonResponse
     {
@@ -51,11 +54,13 @@ class GradeController extends AppController
             return $this->errorJsonMessage('Dieses Fach wurde nicht gefunden');
         }
 
-        return $this->json(
-            data: $subject->getGrades()->map(function (Grade $grade) {
-                return $grade->toJson();
-            })->getValues()
+        $gradesPagingData = $this->gradeRepository->getGradesForSubject(
+            subject: $subject,
+            page: $dto->page,
+            perPage: $dto->perPage
         );
+
+        return $this->json($gradesPagingData->toJson());
     }
 
     /**

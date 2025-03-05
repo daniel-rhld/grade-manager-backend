@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\DTO\PagingData\PagingData;
 use App\Entity\Grade;
 use App\Entity\Subject;
 use App\Entity\User;
@@ -43,6 +44,39 @@ class GradeRepository extends ServiceEntityRepository
         } catch (\Exception) {
             return null;
         }
+    }
+
+    public function getGradesForSubject(
+        Subject $subject,
+        int $page,
+        int $perPage
+    ): PagingData
+    {
+        $baseQuery = $this->createQueryBuilder('g')
+            ->where('g.subject = :subject')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('subject', $subject);
+
+        $resultsQuery = (clone $baseQuery)
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
+
+        $totalResultCountQuery = (clone $baseQuery)
+            ->select('COUNT(g.id) AS count')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $totalPages = ceil($totalResultCountQuery / $perPage);
+
+        return new PagingData(
+            page: $page,
+            perPage: $perPage,
+            totalItems: $totalResultCountQuery,
+            totalPages: $totalPages,
+            data: $resultsQuery
+        );
     }
 
 }

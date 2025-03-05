@@ -11,5 +11,13 @@ readonly class GetGradesDTO
         #[SerializedName('subject_id')]
         #[Assert\NotBlank(message: 'No subject ID submitted')]
         public int $subjectId,
+
+        #[SerializedName('page')]
+        #[Assert\NotBlank(message: 'No page submitted')]
+        public int $page,
+
+        #[SerializedName('per_page')]
+        #[Assert\NotBlank(message: 'No page submitted')]
+        public int $perPage,
     ) {}
 }
